@@ -1,6 +1,16 @@
 ## Getting Started
 
-First, run the development server:
+First, run the json server:
+
+```bash
+npm run db
+# or
+yarn db
+```
+
+
+Then, run the development server in separate terminal:
+
 
 ```bash
 npm run dev
@@ -10,14 +20,6 @@ yarn dev
 pnpm dev
 ```
 
-
-Then, run the json server in separate terminal:
-
-```bash
-npm run db
-# or
-yarn db
-```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
