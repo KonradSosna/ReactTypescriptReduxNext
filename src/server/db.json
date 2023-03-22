@@ -1,0 +1,39 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "John Snow",
+      "username": "Wolf",
+      "email": "john@snow.com",
+      "city": "Winterfell"
+    },
+    {
+      "id": 2,
+      "name": "Darth Vader",
+      "username": "Vader",
+      "email": "darth@vader.com",
+      "city": "Death Star"
+    },
+    {
+      "id": 3,
+      "name": "Frodo Baggins",
+      "username": "Frodo",
+      "email": "frodo@baggins.com",
+      "city": "Shire"
+    },
+    {
+      "id": 4,
+      "name": "Indiana Jones",
+      "username": "Indy",
+      "email": "indiana@johnes.com",
+      "city": "Venice"
+    },
+    {
+      "id": 5,
+      "name": "Test User",
+      "username": "TestUser",
+      "city": "Test City",
+      "email": "test@user.pl"
+    }
+  ]
+}

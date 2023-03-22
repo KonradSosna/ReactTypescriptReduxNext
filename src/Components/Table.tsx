@@ -1,4 +1,11 @@
-import { FC, memo, MouseEvent, useState } from 'react';
+import {
+	Dispatch,
+	FC,
+	memo,
+	MouseEvent,
+	SetStateAction,
+	useState,
+} from 'react';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -11,17 +18,20 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import { visuallyHidden } from '@mui/utils';
-import { Data } from '@/utils/mockData';
-import { Button, Divider, Grid, Modal, Skeleton, Stack } from '@mui/material';
+import { Button, Divider, Grid, Modal, Skeleton } from '@mui/material';
 import { useRouter } from 'next/router';
 import styled from '@emotion/styled';
+import { Data } from '@/server/type';
+import { useDeleteInvoice } from '@/hooks/useDeleteUser';
+import { useSnackbar } from 'notistack';
 
 const style = {
 	position: 'absolute' as 'absolute',
 	top: '50%',
 	left: '50%',
 	transform: 'translate(-50%, -50%)',
-	width: 400,
+	maxWidth: 400,
+	minWidth: 300,
 	bgcolor: 'background.paper',
 	border: '2px solid #000',
 	boxShadow: 24,
@@ -167,11 +177,14 @@ function EnhancedTableToolbar() {
 }
 
 interface UserTablePropsType {
-	rowsData: Data[];
-	setRows: (rows: Data[]) => void;
+	rowsData?: Data[];
+	loading?: boolean;
+	setUsers: Dispatch<SetStateAction<Data[]>>;
 }
 
-const UserTable: FC<UserTablePropsType> = ({ rowsData, setRows }) => {
+const UserTable: FC<UserTablePropsType> = ({ rowsData, loading, setUsers }) => {
+	const { enqueueSnackbar } = useSnackbar();
+
 	const [order, setOrder] = useState<Order>('asc');
 	const [orderBy, setOrderBy] = useState<keyof Data>('id');
 	const [open, setOpen] = useState(false);
@@ -186,8 +199,12 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, setRows }) => {
 	const handleCloseDeleteModal = () => setOpen(false);
 
 	const handleDelete = (id: number) => {
-		const filteredRows = rowsData.filter((row) => row.id !== id);
-		setRows(filteredRows);
+		useDeleteInvoice(id, () => {
+			setUsers(
+				() => rowsData?.filter((user: Data) => user.id !== id) as Data[]
+			);
+		});
+		enqueueSnackbar('User deleted successfully', { variant: 'success' });
 		handleCloseDeleteModal();
 	};
 
@@ -198,6 +215,33 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, setRows }) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
+	};
+
+	const TableSkeleton = ({
+		rows,
+		columns,
+	}: {
+		rows: number;
+		columns: number;
+	}) => {
+		return (
+			<>
+				{Array.from(Array(columns).keys()).map((key: number) => (
+					<TableRow key={key}>
+						{Array.from(Array(rows).keys()).map((col: number) => (
+							<TableCell key={col} align="center">
+								<Skeleton
+									key={col}
+									animation="wave"
+									height={50}
+									width={'70%'}
+								/>
+							</TableCell>
+						))}
+					</TableRow>
+				))}
+			</>
+		);
 	};
 
 	return (
@@ -211,10 +255,10 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, setRows }) => {
 								order={order}
 								orderBy={orderBy}
 								onRequestSort={handleRequestSort}
-								rowCount={rowsData.length}
+								rowCount={rowsData ? rowsData.length : 0}
 							/>
 							<TableBody>
-								{rowsData ? (
+								{rowsData && !loading ? (
 									rowsData
 										.slice()
 										.sort(getComparator(order, orderBy))
@@ -224,7 +268,7 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, setRows }) => {
 													hover
 													role="checkbox"
 													tabIndex={-1}
-													key={row.name}
+													key={row.id}
 												>
 													<TableCell align="center">{row.id}</TableCell>
 													<TableCell align="center">{row.name}</TableCell>
@@ -264,38 +308,9 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, setRows }) => {
 											);
 										})
 								) : (
-									<TableRow>
-										<td
-											className="MuiTableCell-root MuiTableCell-body"
-											colSpan={headCells.length + 2}
-											style={{ padding: '8px 0', textAlign: 'center' }}
-										>
-											<Stack spacing={1}>
-												<Skeleton
-													variant="rounded"
-													width={'100%'}
-													height={60}
-												/>
-												<Skeleton
-													variant="rounded"
-													width={'100%'}
-													height={60}
-												/>
-												<Skeleton
-													variant="rounded"
-													width={'100%'}
-													height={60}
-												/>
-												<Skeleton
-													variant="rounded"
-													width={'100%'}
-													height={60}
-												/>
-											</Stack>
-										</td>
-									</TableRow>
+									<TableSkeleton columns={4} rows={7} />
 								)}
-								{rowsData.length === 0 && (
+								{rowsData && rowsData.length === 0 && !loading && (
 									<TableRow>
 										<td
 											className="MuiTableCell-root MuiTableCell-body"
@@ -335,7 +350,7 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, setRows }) => {
 
 							<Grid item>
 								<Typography id="modal-modal-description" sx={{ mt: 2 }}>
-									Do you want to delete user {setRowToDelete?.name}?
+									Do you want to delete {setRowToDelete?.name}?
 								</Typography>
 							</Grid>
 

@@ -1,4 +1,4 @@
-import { Data } from '@/utils/mockData';
+import { Data } from '@/server/type';
 import styled from '@emotion/styled';
 import {
 	Button,
@@ -20,6 +20,7 @@ import {
 const ErrorField = styled(Typography)(
 	({ theme }) => `
 	color: ${theme.palette.error.main};
+	margin-bottom: -24px;
 `
 );
 
@@ -44,16 +45,22 @@ const UserForm: FC<UserFormPropsType> = ({
 				{field?.type === 'required' ? (
 					<ErrorField>This field is required</ErrorField>
 				) : field?.type === 'pattern' && field.ref?.name !== 'email' ? (
-					<ErrorField>{'Field can only contain lower case letters'}</ErrorField>
+					<ErrorField>{'Field can only contain letters'}</ErrorField>
 				) : field?.type === 'pattern' && field.ref?.name === 'email' ? (
-					<ErrorField>{'Entered value does not match email format'}</ErrorField>
+					<ErrorField>{'Wrong email format'}</ErrorField>
 				) : null}
 			</>
 		);
 	};
 
 	return (
-		<Paper sx={{ width: '400px', height: '550px' }}>
+		<Paper
+			sx={{
+				width: '450px',
+				minHeight: '550px',
+				maxHeight: '650px',
+			}}
+		>
 			<Grid container direction="column">
 				<Grid item padding="0 30px">
 					{<h1>{rowToEdit ? 'Edit Form' : 'Add Form'}</h1>}
@@ -66,7 +73,7 @@ const UserForm: FC<UserFormPropsType> = ({
 							direction="column"
 							justifyContent="center"
 							alignItems="center"
-							rowGap={4}
+							rowGap={6}
 							sx={{
 								margin: '20px 0',
 							}}
@@ -75,7 +82,7 @@ const UserForm: FC<UserFormPropsType> = ({
 								<TextField
 									{...register('name', {
 										required: true,
-										pattern: /^[A-Za-z]+$/i,
+										pattern: /^[a-zA-Z ]+$/i,
 										maxLength: 20,
 									})}
 									error={errors.name ? true : false}
@@ -120,7 +127,7 @@ const UserForm: FC<UserFormPropsType> = ({
 								<TextField
 									{...register('city', {
 										required: true,
-										pattern: /^[A-Za-z]+$/i,
+										pattern: /^[a-zA-Z ]+$/i,
 										maxLength: 20,
 									})}
 									error={errors.city ? true : false}
@@ -131,7 +138,14 @@ const UserForm: FC<UserFormPropsType> = ({
 								{ErrorMsg(errors.city as FieldError)}
 							</Grid>
 
-							<Grid item marginTop="20px">
+							<Grid
+								item
+								marginTop="20px"
+								display="flex"
+								flexWrap="wrap"
+								justifyContent="center"
+								rowGap={2}
+							>
 								<Button
 									variant="outlined"
 									color="error"
@@ -144,6 +158,7 @@ const UserForm: FC<UserFormPropsType> = ({
 									color="success"
 									type="submit"
 									style={{ marginLeft: '10px' }}
+									disabled={Object.keys(errors).length > 0}
 								>
 									Submit
 								</Button>
