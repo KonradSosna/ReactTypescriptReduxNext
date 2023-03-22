@@ -6,14 +6,21 @@ import UserTable from '@/Components/Table';
 import ApiService from '@/server/api';
 import { ReducerType } from '@/server/type';
 import { setLoading, setUsers } from '@/utils/store';
+import { useSnackbar } from 'notistack';
 
 export default function HomePage() {
 	const dispatch = useDispatch();
+	const { enqueueSnackbar } = useSnackbar();
 
 	async function fetchInvoices() {
-		const { data } = await ApiService.get('http://localhost:8000/users');
-		dispatch(setUsers(data));
-		dispatch(setLoading(false));
+		await ApiService.get('http://localhost:8000/users')
+			.then((res) => {
+				dispatch(setUsers(res.data));
+				dispatch(setLoading(false));
+			})
+			.catch(() =>
+				enqueueSnackbar('Something went worng', { variant: 'error' })
+			);
 	}
 
 	useEffect(() => {
