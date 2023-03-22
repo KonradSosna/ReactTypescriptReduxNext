@@ -2,7 +2,7 @@
   "users": [
     {
       "id": 1,
-      "name": "John Snow",
+      "name": "dJohn SnowddAS",
       "username": "Wolf",
       "email": "john@snow.com",
       "city": "Winterfell"
@@ -32,7 +32,7 @@
       "id": 5,
       "name": "Test User",
       "username": "TestUser",
-      "city": "Test City",
+      "city": "Szczecin",
       "email": "test@user.pl"
     }
   ]

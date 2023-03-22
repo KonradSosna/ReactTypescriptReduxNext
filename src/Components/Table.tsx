@@ -1,12 +1,20 @@
+import { useRouter } from 'next/router';
+import { useSnackbar } from 'notistack';
+import { FC, memo, MouseEvent } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { useDeleteInvoice } from '@/hooks/useDeleteUser';
+import { Data, ReducerType } from '@/server/type';
 import {
-	Dispatch,
-	FC,
-	memo,
-	MouseEvent,
-	SetStateAction,
-	useState,
-} from 'react';
+	setOpen,
+	setRowToDelete,
+	setSortingOrder,
+	setUsers,
+} from '@/utils/store';
+import styled from '@emotion/styled';
+import { Button, Divider, Grid, Modal, Skeleton } from '@mui/material';
 import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
@@ -16,14 +24,6 @@ import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
-import { visuallyHidden } from '@mui/utils';
-import { Button, Divider, Grid, Modal, Skeleton } from '@mui/material';
-import { useRouter } from 'next/router';
-import styled from '@emotion/styled';
-import { Data } from '@/server/type';
-import { useDeleteInvoice } from '@/hooks/useDeleteUser';
-import { useSnackbar } from 'notistack';
 
 const style = {
 	position: 'absolute' as 'absolute',
@@ -32,6 +32,7 @@ const style = {
 	transform: 'translate(-50%, -50%)',
 	maxWidth: 400,
 	minWidth: 300,
+	width: '100%',
 	bgcolor: 'background.paper',
 	border: '2px solid #000',
 	boxShadow: 24,
@@ -74,6 +75,7 @@ interface HeadCell {
 	id: keyof Data;
 	label: string;
 	numeric: boolean;
+	enableSorting: boolean;
 }
 
 const headCells: readonly HeadCell[] = [
@@ -81,26 +83,31 @@ const headCells: readonly HeadCell[] = [
 		id: 'id',
 		numeric: false,
 		label: 'Id',
+		enableSorting: false,
 	},
 	{
 		id: 'name',
 		numeric: false,
 		label: 'Name',
+		enableSorting: false,
 	},
 	{
 		id: 'username',
 		numeric: true,
 		label: 'Username',
+		enableSorting: true,
 	},
 	{
 		id: 'email',
 		numeric: true,
 		label: 'Email',
+		enableSorting: false,
 	},
 	{
 		id: 'city',
 		numeric: true,
 		label: 'City',
+		enableSorting: false,
 	},
 ];
 
@@ -131,13 +138,9 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 							active={orderBy === headCell.id}
 							direction={orderBy === headCell.id ? order : 'asc'}
 							onClick={createSortHandler(headCell.id)}
+							disabled={!headCell.enableSorting}
 						>
 							{headCell.label}
-							{orderBy === headCell.id ? (
-								<Box component="span" sx={visuallyHidden}>
-									{order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-								</Box>
-							) : null}
 						</TableSortLabel>
 					</StyledTableCell>
 				))}
@@ -179,29 +182,32 @@ function EnhancedTableToolbar() {
 interface UserTablePropsType {
 	rowsData?: Data[];
 	loading?: boolean;
-	setUsers: Dispatch<SetStateAction<Data[]>>;
 }
 
-const UserTable: FC<UserTablePropsType> = ({ rowsData, loading, setUsers }) => {
+const UserTable: FC<UserTablePropsType> = ({ rowsData, loading }) => {
 	const { enqueueSnackbar } = useSnackbar();
+	const dispatch = useDispatch();
 
-	const [order, setOrder] = useState<Order>('asc');
-	const [orderBy, setOrderBy] = useState<keyof Data>('id');
-	const [open, setOpen] = useState(false);
-	const [setRowToDelete, setSetRowToDelete] = useState<Data | null>(null);
+	const order = useSelector((state: ReducerType) => state.userList.order);
+	const orderBy = 'username';
+
+	const open = useSelector((state: ReducerType) => state.userList.open);
+	const rowToDelete = useSelector(
+		(state: ReducerType) => state.userList.rowToDelete
+	);
+
 	const { push } = useRouter();
 
 	const handleOpenDeleteModal = (row: Data) => {
-		setOpen(true);
-		setSetRowToDelete(row);
+		dispatch(setOpen(true));
+		dispatch(setRowToDelete(row));
 	};
 
-	const handleCloseDeleteModal = () => setOpen(false);
-
+	const handleCloseDeleteModal = () => dispatch(setOpen(false));
 	const handleDelete = (id: number) => {
 		useDeleteInvoice(id, () => {
-			setUsers(
-				() => rowsData?.filter((user: Data) => user.id !== id) as Data[]
+			dispatch(
+				setUsers(rowsData?.filter((user: Data) => user.id !== id) as Data[])
 			);
 		});
 		enqueueSnackbar('User deleted successfully', { variant: 'success' });
@@ -213,8 +219,7 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, loading, setUsers }) => {
 		property: keyof Data
 	) => {
 		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
+		dispatch(setSortingOrder(isAsc ? 'desc' : 'asc'));
 	};
 
 	const TableSkeleton = ({
@@ -334,13 +339,14 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, loading, setUsers }) => {
 					aria-describedby="modal-modal-description"
 				>
 					<Box sx={style}>
-						<Grid container spacing={2}>
+						<Grid container spacing={2} direction="column">
 							<Grid item>
 								<Typography
 									id="modal-modal-title"
 									variant="h5"
 									component="h2"
 									fontWeight="700"
+									sx={{ mb: 2 }}
 								>
 									Delete
 								</Typography>
@@ -349,8 +355,12 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, loading, setUsers }) => {
 							<Divider />
 
 							<Grid item>
-								<Typography id="modal-modal-description" sx={{ mt: 2 }}>
-									Do you want to delete {setRowToDelete?.name}?
+								<Typography id="modal-modal-description" sx={{ m: 2 }}>
+									Do you want to delete{' '}
+									<span style={{ fontWeight: 'bold' }}>
+										{rowToDelete?.name}
+									</span>
+									?
 								</Typography>
 							</Grid>
 
@@ -382,7 +392,7 @@ const UserTable: FC<UserTablePropsType> = ({ rowsData, loading, setUsers }) => {
 													backgroundColor: '#aa1d1d',
 												},
 											}}
-											onClick={() => handleDelete(setRowToDelete?.id as number)}
+											onClick={() => handleDelete(rowToDelete?.id as number)}
 											style={{ marginLeft: '10px' }}
 										>
 											Delete

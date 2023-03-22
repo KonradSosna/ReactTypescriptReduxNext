@@ -1,18 +1,19 @@
-import UserForm from '@/Components/UserForm';
+import { useRouter } from 'next/router';
+import { useSnackbar } from 'notistack';
 import { useMemo } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
-import { useRouter } from 'next/router';
+import { useSelector } from 'react-redux';
+
 import { ScreenWrapper } from '@/Components/ScreenWraper';
-import { Data } from '@/server/type';
-import useUsers from '@/hooks/useUsers';
-import { useSnackbar } from 'notistack';
+import UserForm from '@/Components/UserForm';
 import ApiService from '@/server/api';
+import { Data, ReducerType } from '@/server/type';
 import { CircularProgress } from '@mui/material';
 
 const Edit = () => {
 	const { enqueueSnackbar } = useSnackbar();
 	const { query, push } = useRouter();
-	const { users } = useUsers();
+	const users = useSelector((state: ReducerType) => state.userList.users);
 
 	const rowToEdit = useMemo(
 		() => users.filter((user: Data) => user.id === Number(query.id))[0],

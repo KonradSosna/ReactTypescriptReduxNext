@@ -1,16 +1,16 @@
 import { ScreenWrapper } from '@/Components/ScreenWraper';
 import UserForm from '@/Components/UserForm';
-import useUsers from '@/hooks/useUsers';
-import { Data } from '@/server/type';
+import { Data, ReducerType } from '@/server/type';
 import { useRouter } from 'next/router';
 import { useSnackbar } from 'notistack';
 import { FieldValues, useForm } from 'react-hook-form';
 import ApiService from '@/server/api';
+import { useSelector } from 'react-redux';
 
 const Add = () => {
 	const { push } = useRouter();
 	const { enqueueSnackbar } = useSnackbar();
-	const { usersCount } = useUsers();
+	const users = useSelector((state: ReducerType) => state.userList.users);
 
 	const {
 		register,
@@ -21,7 +21,7 @@ const Add = () => {
 
 	async function onSubmit(data: FieldValues) {
 		const user: Data = {
-			id: usersCount + 1,
+			id: users.length + 1,
 			name: data.name,
 			username: data.username,
 			city: data.city,
